@@ -4,7 +4,7 @@ import { useEffect } from "react"
 import type { SortCriterion } from "@/lib/types"
 import { Button } from "@/components/ui/button"
 import { motion } from "framer-motion"
-import { UserIcon as TableUser, CalendarIcon as TableCalendar, TableIcon as TableId, X, ChevronDown, ChevronUp, GripVertical } from "lucide-react"
+import { UserIcon as TableUser, CalendarIcon as TableCalendar, TableIcon as TableId, X, ChevronDown, ChevronUp } from "lucide-react"
 import { SortableContext, verticalListSortingStrategy } from "@dnd-kit/sortable"
 import { SortableItem } from "./sortable-item"
 
@@ -38,7 +38,6 @@ export function SortPanel({
     { id: "updatedAt", label: "Updated At", icon: <TableCalendar className="h-4 w-4" /> },
   ]
 
-  // Close the panel when Escape key is pressed
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       if (e.key === "Escape") {
@@ -50,32 +49,26 @@ export function SortPanel({
     return () => window.removeEventListener("keydown", handleKeyDown)
   }, [onClose])
 
-  // Helper to determine if a field is currently being used for sorting
   const getFieldSortCriterion = (fieldId: string) => {
     return sortCriteria.find((c) => c.field === fieldId);
   }
 
-  // Helper to create a sort button
   const renderSortButton = (fieldId: string, direction: "asc" | "desc", label: string) => {
     const criterion = getFieldSortCriterion(fieldId);
     const isActive = criterion && criterion.direction === direction;
     
     const handleClick = () => {
       if (!criterion) {
-        // If no criterion exists for this field, add one with the desired direction
         onAddCriterion(fieldId);
         if (direction === "desc") {
-          // The default is asc, so toggle once to make it desc
           const newCriterion = sortCriteria.find(c => c.field === fieldId);
           if (newCriterion) {
             onToggleDirection(newCriterion.id);
           }
         }
       } else if (criterion.direction !== direction) {
-        // Toggle direction if it's not the desired direction
         onToggleDirection(criterion.id);
       } else {
-        // Remove criterion if clicking the same direction again
         onRemoveCriterion(criterion.id);
       }
     };
@@ -114,19 +107,15 @@ export function SortPanel({
       </div>
 
       <div className="p-3 space-y-3">
-        {/* Combined list of all fields */}
         <SortableContext 
           items={sortCriteria.map(c => c.id)} 
           strategy={verticalListSortingStrategy}
         >
           <div className="space-y-2">
-            {/* Render drop indicator before the first item if there's an active drag */}
             {activeDragId && renderDropIndicator && renderDropIndicator(0)}
             
-            {/* All active sort fields - these are already in use for sorting */}
             {sortCriteria.map((criterion, index) => (
               <div key={criterion.id} className="relative">
-                {/* Only render the item if it's not being dragged */}
                 {criterion.id !== activeDragId && (
                   <SortableItem
                     id={criterion.id}
@@ -139,20 +128,17 @@ export function SortPanel({
                     index={index}
                   />
                 )}
-                {/* Render drop indicator after each item */}
                 {activeDragId && renderDropIndicator && renderDropIndicator(index + 1)}
               </div>
             ))}
           </div>
         </SortableContext>
 
-        {/* Available fields section */}
         <div className={`${sortCriteria.length > 0 ? 'mt-4 pt-4 border-t border-gray-200' : ''}`}>
           <h4 className="text-sm font-medium mb-2">Available Fields</h4>
           <div className="space-y-2">
             {sortableFields.map((field) => {
               const criterion = getFieldSortCriterion(field.id);
-              // Only show fields that aren't already in use for sorting
               if (!criterion) {
                 return (
                   <div 

@@ -48,14 +48,12 @@ export function SortPanelContainer({
   const sortPanelRef = useRef<HTMLDivElement>(null)
   const isDraggingRef = useRef(false)
   
-  // Update local sort criteria when parent criteria changes and not during dragging
   useEffect(() => {
     if (!isDraggingRef.current) {
       setLocalSortCriteria([...sortCriteria]);
     }
   }, [sortCriteria]);
   
-  // Add click outside handler for sort panel
   useEffect(() => {
     function handleClickOutside(event: MouseEvent) {
       if (sortPanelRef.current && !sortPanelRef.current.contains(event.target as Node)) {
@@ -72,7 +70,7 @@ export function SortPanelContainer({
   const sensors = useSensors(
     useSensor(PointerSensor, {
       activationConstraint: {
-        distance: 8, // This helps prevent accidental drags
+        distance: 8,
       },
     }),
     useSensor(KeyboardSensor, {
@@ -80,7 +78,6 @@ export function SortPanelContainer({
     })
   );
 
-  // Reordering logic that can be shared between events
   const reorderItems = useCallback((activeId: string, overId: string, items: SortCriterion[]) => {
     const oldIndex = items.findIndex((item) => item.id === activeId);
     const newIndex = items.findIndex((item) => item.id === overId);
@@ -97,139 +94,103 @@ export function SortPanelContainer({
     setActiveDragId(active.id as string);
     isDraggingRef.current = true;
     
-    // Find the criterion that's being dragged
     const draggedCriterion = localSortCriteria.find(c => c.id === active.id);
     if (draggedCriterion) {
       setActiveDragData({...draggedCriterion});
     }
     
-    // Add a class to the body for styling during drag
     document.body.classList.add('sorting-active');
   };
   
-  // Adjust handleDragOver to set activeDropId to the drop slot index
   const handleDragOver = (event: DragMoveEvent) => {
     const { active, over } = event;
     if (!over) return;
     
-    // Get index of the item being dragged
     const activeIndex = localSortCriteria.findIndex((c) => c.id === active.id);
-    
-    // Get index of the item being dragged over
     const overIndex = localSortCriteria.findIndex((c) => c.id === over.id);
     
-    // Special handling for when the cursor is over a sortable item
     if (overIndex !== -1) {
-      // Handle first position special case
       if (overIndex === 0) {
         const overRect = over.rect;
         const mouseY = event.activatorEvent instanceof MouseEvent ? event.activatorEvent.clientY : 0;
         
-        // If mouse is in the top half of the first item, position before it
         if (overRect && mouseY < overRect.top + overRect.height / 2) {
           moveItemToPosition(activeIndex, 0);
           return;
         }
       }
       
-      // Handle last position special case
       if (overIndex === localSortCriteria.length - 1) {
         const overRect = over.rect;
         const mouseY = event.activatorEvent instanceof MouseEvent ? event.activatorEvent.clientY : 0;
         
-        // If mouse is in the bottom half of the last item, position after it
         if (overRect && mouseY > overRect.top + overRect.height / 2) {
           moveItemToPosition(activeIndex, localSortCriteria.length);
           return;
         }
       }
       
-      // Normal case - determine if we should position before or after the item
       const overRect = over.rect;
       const mouseY = event.activatorEvent instanceof MouseEvent ? event.activatorEvent.clientY : 0;
       
       if (overRect) {
-        // If mouse is in the top half, position before; otherwise, position after
         const targetIndex = mouseY < overRect.top + overRect.height / 2 ? overIndex : overIndex + 1;
         moveItemToPosition(activeIndex, targetIndex);
       }
     } else {
-      // If not over a sortable item, assume last position
       moveItemToPosition(activeIndex, localSortCriteria.length);
     }
   };
   
-  // Helper to move an item to a specific position and update state
   const moveItemToPosition = (fromIndex: number, toIndex: number) => {
     if (fromIndex === toIndex) return;
     
-    // Create a new array for reordering
     const newItems = [...localSortCriteria];
-    
-    // Remove the item from its current position
     const [draggedItem] = newItems.splice(fromIndex, 1);
-    
-    // Insert at the target position
     newItems.splice(toIndex > fromIndex ? toIndex - 1 : toIndex, 0, draggedItem);
     
-    // Update local state
     setLocalSortCriteria(newItems);
     
-    // Update parent component
     if (onUpdateSortCriteria) {
       onUpdateSortCriteria(newItems);
     }
     
-    // Set the active drop target
     setActiveDropId(`drop-${toIndex}`);
   };
 
-  // Adjust handleDragEnd to reset activeDropId
   const handleDragEnd = (event: DragEndEvent) => {
     const { active, over } = event;
 
-    // Remove the sorting class
     document.body.classList.remove('sorting-active');
-    
-    // Clear active drop target
     setActiveDropId(null);
     isDraggingRef.current = false;
 
     if (over && active.id !== over.id) {
-      // Create the final sort criteria array after reordering
       const newSortCriteria = reorderItems(
         active.id as string, 
         over.id as string, 
         localSortCriteria
       );
       
-      // Set the final local state
       setLocalSortCriteria(newSortCriteria);
       
-      // Apply the changes to the parent component
       if (onUpdateSortCriteria) {
         onUpdateSortCriteria(newSortCriteria);
       }
     }
     
-    // Reset drag state
     setActiveDragId(null);
     setActiveDragData(null);
   };
 
-  // Helper to render drop indicators at every slot
   const renderDropIndicator = (index: number) => {
-    // Highlight if this is the current drop target
     const isActive = activeDropId === `drop-${index}`;
     
-    // Only render if active
     if (!isActive) return null;
     
-    // Get the drag direction by comparing indices
     const activeItemIndex = localSortCriteria.findIndex(item => item.id === activeDragId);
     const movingDown = activeItemIndex < index;
     
-    // Return enhanced indicator that shows direction
     return (
       <div className="h-1 relative my-1 rounded-md overflow-hidden">
         <div 
@@ -280,7 +241,6 @@ export function SortPanelContainer({
         />
       </div>
       
-      {/* Drag overlay for smooth animations */}
       <DragOverlay adjustScale={true} zIndex={1000} dropAnimation={{
         duration: 150,
         easing: 'cubic-bezier(0.18, 0.67, 0.6, 1.22)',

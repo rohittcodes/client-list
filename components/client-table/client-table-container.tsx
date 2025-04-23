@@ -21,7 +21,6 @@ export function ClientTableContainer({ clients, onAddClientClick }: ClientTableC
   const [activeTab, setActiveTab] = useState("all")
   const [searchQuery, setSearchQuery] = useState("")
 
-  // Load sort criteria from localStorage on component mount
   useEffect(() => {
     const savedSortCriteria = localStorage.getItem("clientSortCriteria")
     if (savedSortCriteria) {
@@ -29,21 +28,17 @@ export function ClientTableContainer({ clients, onAddClientClick }: ClientTableC
     }
   }, [])
 
-  // Save sort criteria to localStorage whenever it changes
   useEffect(() => {
     localStorage.setItem("clientSortCriteria", JSON.stringify(sortCriteria))
   }, [sortCriteria])
 
-  // Apply sorting, filtering, and search whenever relevant state changes
   useEffect(() => {
     let result = [...clients]
 
-    // Apply tab filtering
     if (activeTab !== "all") {
       result = result.filter((client) => client.type.toLowerCase() === activeTab.toLowerCase())
     }
 
-    // Apply search filtering
     if (searchQuery.trim() !== "") {
       const query = searchQuery.toLowerCase()
       result = result.filter(
@@ -54,16 +49,13 @@ export function ClientTableContainer({ clients, onAddClientClick }: ClientTableC
       )
     }
 
-    // Apply sorting based on criteria
     if (sortCriteria.length > 0) {
       result = [...result].sort((a, b) => {
         for (const criterion of sortCriteria) {
           const key = criterion.field as keyof ClientData
           const direction = criterion.direction === "asc" ? 1 : -1
 
-          // Handle different data types appropriately
           if (key === "id") {
-            // Parse ID as number for numeric comparison
             const idA = parseInt(a[key] as string, 10)
             const idB = parseInt(b[key] as string, 10)
             
@@ -76,11 +68,10 @@ export function ClientTableContainer({ clients, onAddClientClick }: ClientTableC
             const dateB = new Date(b[key] as string).getTime()
             
             if (dateA !== dateB) {
-              return (dateB - dateA) * direction // For dates, newer comes first (reversed)
+              return (dateB - dateA) * direction
             }
           } 
           else {
-            // String comparison for text fields
             const valueA = String(a[key]).toLowerCase()
             const valueB = String(b[key]).toLowerCase()
             
@@ -93,11 +84,9 @@ export function ClientTableContainer({ clients, onAddClientClick }: ClientTableC
       })
     }
 
-    // Apply the filtered/sorted data immediately
     setFilteredClients(result)
   }, [clients, sortCriteria, activeTab, searchQuery])
 
-  // Sort panel handlers
   const handleAddSortCriterion = (field: string) => {
     const existingIndex = sortCriteria.findIndex((c) => c.field === field)
 
