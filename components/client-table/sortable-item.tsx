@@ -40,7 +40,7 @@ export function SortableItem({
   isDropTarget = false,
   index = 0
 }: SortableItemProps) {
-  const { attributes, listeners, setNodeRef, transform, transition, isDragging, over } = useSortable({ 
+  const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ 
     id,
     disabled: isDragOverlay
   })

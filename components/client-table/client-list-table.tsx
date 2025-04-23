@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState } from "react"
 import { mockClients } from "@/lib/data"
 import { ClientsHeader } from "./clients-header"
 import { ClientTableContainer } from "./client-table-container"
